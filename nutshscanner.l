@@ -4,13 +4,15 @@
 
 DIGIT [0-9]
 QUOTE ["]
-
-
+META [/</>/|/"/&]
 %%
 
-[ \t\n]+ return WHITE_SPACE;
+[ \t]+ return WHITE_SPACE;
+[..] return DOT_DOT;
 [/.] return DOT;
-[.][.] return DOT_DOT;
+[~] return TILDE;
+{META} return METACHARACTER;
+
 [A-Za-z{DIGIT}]+ return WORD;
 
 . return UNDEFINED;

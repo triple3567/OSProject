@@ -27,6 +27,11 @@ int main(int argc, char *argv[])
 		else if(token == DOT_DOT){
 			printf("DOT DOT\n");
 		}
+		else if(token == METACHARACTER){
+			printf("METACHARACTER\n");
+		}
+
+		printf("<<INPUT READ>>  %s\n", yytext);
 
 	}
 
