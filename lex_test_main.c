@@ -16,10 +16,10 @@ int main(int argc, char *argv[])
 		if(token == 0) break;
 
 		if(token == WORD){
-			printf("WORD");
+			printf("WORD\n");
 		}
 		else if(token == WHITE_SPACE){
-			printf("white space");
+			printf("white space\n");
 		}
 	}
 
