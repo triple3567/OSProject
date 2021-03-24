@@ -4,9 +4,8 @@
 int yylex();
 extern char* yytext;
 
-int main()
+int main(int argc, char *argv[])
 {	
-
 
 	printf("Welcome to the Nutshell\n");
 	while(1)
@@ -16,6 +15,9 @@ int main()
 
 		if(token == WORD){
 			printf("WORD");
+		}
+		else if(token = WHITE_SPACE){
+			printf("white space");
 		}
 	}
 

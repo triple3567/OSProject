@@ -6,5 +6,6 @@ enum token_type{
     DOT,
     DOT_DOT,
     TILDE,
-    METACHARACTER
+    METACHARACTER,
+    UNDEFINED
 };
