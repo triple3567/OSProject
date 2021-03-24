@@ -21,6 +21,13 @@ int main(int argc, char *argv[])
 		else if(token == WHITE_SPACE){
 			printf("white space\n");
 		}
+		else if(token == DOT){
+			printf("DOT\n");
+		}
+		else if(token == DOT_DOT){
+			printf("DOT DOT\n");
+		}
+
 	}
 
 	return 0;
