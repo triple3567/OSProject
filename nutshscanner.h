@@ -7,4 +7,4 @@ enum token_type{
     DOT_DOT,
     TILDE,
     METACHARACTER
-}
+};
