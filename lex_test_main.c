@@ -4,6 +4,8 @@
 int yylex();
 extern char* yytext;
 
+
+
 int main(int argc, char *argv[])
 {	
 
@@ -16,7 +18,7 @@ int main(int argc, char *argv[])
 		if(token == WORD){
 			printf("WORD");
 		}
-		else if(token = WHITE_SPACE){
+		else if(token == WHITE_SPACE){
 			printf("white space");
 		}
 	}
