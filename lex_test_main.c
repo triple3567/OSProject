@@ -12,6 +12,7 @@ int main(int argc, char *argv[])
 	printf("Welcome to the Nutshell\n");
 	while(1)
 	{
+		printf(">> ");
 		int token = yylex();
 		if(token == 0) break;
 
