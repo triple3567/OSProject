@@ -8,8 +8,8 @@ META [/</>/|/"/&]
 %%
 
 [ \t\r\n]+ {/* WHITE_SPACE*/};
-[..] return DOT_DOT;
-[/.] return DOT;
+"." return DOT;
+".." return DOT_DOT;
 [~] return TILDE;
 {META} return METACHARACTER;
 
