@@ -5,10 +5,8 @@
 int main()
 {
 	printf("Welcome to the Nutshell\n");
-	while(1)
-	{
-		printf(">> ");
+	
+	printf(">> ");
 
-        yyparse();
-	}
+    yyparse();
 }
