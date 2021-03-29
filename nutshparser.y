@@ -18,7 +18,7 @@
 
 shell:
     shell WORD { //printf(">> "); 
-                 printf("<<INPUT>> %s\n", yytext);
+                 printf("[ INPUT ] %s\n", yytext);
                  printf(">> ");  }
     |
     ;
