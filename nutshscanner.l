@@ -7,7 +7,7 @@ QUOTE ["]
 META [/</>/|/"/&]
 %%
 
-[ \t]+ return WHITE_SPACE;
+[ \t\r\n]+ {/* WHITE_SPACE*/};
 [..] return DOT_DOT;
 [/.] return DOT;
 [~] return TILDE;
