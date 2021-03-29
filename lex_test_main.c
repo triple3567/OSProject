@@ -30,6 +30,9 @@ int main(int argc, char *argv[])
 		else if(token == METACHARACTER){
 			printf("METACHARACTER\n");
 		}
+		else if(token == TILDE){
+			printf("TILDE\n");
+		}
 
 		printf("<<INPUT READ>>  %s\n", yytext);
 
