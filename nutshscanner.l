@@ -1,5 +1,5 @@
-%{
-    #include "nutshscanner.h"
+%{    
+    #include "nutshparser.tab.h"
 %}
 
 DIGIT [0-9]
@@ -17,3 +17,9 @@ META [/</>/|/"/&]
 
 . return UNDEFINED;
 
+%%
+
+int yywrap(void)
+{
+    return 1;
+}
