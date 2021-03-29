@@ -13,7 +13,7 @@ META [/</>/|/"/&]
 [~] return TILDE;
 {META} return METACHARACTER;
 
-[A-Za-z{DIGIT}]+ return WORD;
+[A-Za-z0-9]+ return WORD;
 
 . return UNDEFINED;
 
