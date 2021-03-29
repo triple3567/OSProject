@@ -2,6 +2,7 @@
     #include <stdio.h>
     void yyerror(char*);
     int yylex();
+    extern char* yytext;
 %}
 
 %token WORD
@@ -16,10 +17,14 @@
 %%
 
 shell:
-    shell WORD { printf(">> "); }
+    shell WORD { //printf(">> "); 
+                 printf("<<INPUT>> %s\n", yytext);
+                 printf(">> ");  }
     |
     ;
 
+quit:
+    WORD { exit(0); }
 %%
 
 void yyerror(char *s)
