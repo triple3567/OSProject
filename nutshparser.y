@@ -1,5 +1,6 @@
 %{
     #include <stdio.h>
+    #include "nutshell.h"
     void yyerror(char*);
     int yylex();
     extern char* yytext;
@@ -12,15 +13,21 @@
 %token TILDE
 %token METACHARACTER
 %token UNDEFINED
-
+%token NEW_LINE
 
 %%
 
 shell:
-    shell WORD { //printf(">> "); 
-                 printf("[ INPUT ] %s\n", yytext);
-                 printf(">> ");  }
     |
+    shell WORD { printf("[ INPUT ] %s\n", yytext);
+                 cmd = yytext;
+                 YYACCEPT;
+      
+                 //char s[100];
+                 //printf("%s\n", getcwd(s,100));
+                 //chdir("..");
+                 //printf("%s\n", getcwd(s,100)); 
+                 } 
     ;
 
 quit:
