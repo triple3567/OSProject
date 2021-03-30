@@ -4,9 +4,15 @@
 //#include "nutshscanner.h"
 #include "nutshparser.tab.h"
 
+void printPrompt()
+{
+    char dir[256];
+    printf("user@computer:%s>> ", getcwd(dir,256));
+}
+
 int getCommand()
 {
-    printf(">> ");
+    printPrompt();
     yyparse();
 
     enum cmdResponse resp;
