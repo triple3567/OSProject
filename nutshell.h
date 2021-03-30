@@ -1,4 +1,5 @@
 int getCommand(void);
+void printPrompt(void);
 
 char* cmd;
 
