@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "nutshell.h"
 //#include "nutshscanner.h"
 #include "nutshparser.tab.h"
