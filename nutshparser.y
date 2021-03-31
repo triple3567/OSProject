@@ -22,6 +22,7 @@ cmd_line    :
 	BYE END 		                {exit(1); return 1; }
 	| CD STRING END        			{runCD($2); return 1;}
 	| ALIAS STRING STRING END		{runSetAlias($2, $3); return 1;}
+    | ALIAS END                     {printAlias(); return 1;}
     | PRINTENV END                  {printEnv(); return 1;}
     | UNSETENV STRING END           {unsetEnv($2); return 1;}    
     | UNALIAS STRING END            {unalias($2); return 1;}  
@@ -150,5 +151,12 @@ int unalias(char *variable){
     }
 
     useAlias = true;
+    return 1;
+}
+
+int printAlias(){
+    for (int i = 0; i < aliasIndex; i++){
+        printf("%s = %s\n", aliasTable.name[i], aliasTable.word[i]);
+    }
     return 1;
 }
