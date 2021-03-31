@@ -4,7 +4,8 @@
 
 DIGIT [0-9]
 QUOTE ["]
-META [/</>/|/"/&]
+NOTQUOTE[^"]
+META [/</>/|/&]
 %%
 
 [ \t]+ return WHITE_SPACE;
