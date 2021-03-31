@@ -8,7 +8,8 @@
 void printPrompt()
 {
     char dir[256];
-    printf("user@computer:%s>> ", getcwd(dir,256));
+    getcwd(dir,256);
+    printf("user@computer:%s>> ", dir);
 }
 
 int getCommand()
@@ -28,8 +29,6 @@ int getCommand()
 int main()
 {
 	printf("Welcome to the Nutshell\n");
-
-
     while(1){
         int CMD;
         switch(CMD = getCommand())
@@ -37,6 +36,5 @@ int main()
         case BYE:       exit(0);
         case OK:        printf("OK\n");
         }
-
     }
 }
