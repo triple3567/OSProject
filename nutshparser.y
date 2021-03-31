@@ -1,7 +1,5 @@
 %{
-// This is ONLY a demo micro-shell whose purpose is to illustrate the need for and how to handle nested alias substitutions and Flex start conditions.
-// This is to help students learn these specific capabilities, the code is by far not a complete nutshell by any means.
-// Only "alias name word", "cd word", and "bye" run. 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -17,7 +15,7 @@ int runSetAlias(char *name, char *word);
 %union {char *string;}
 
 %start cmd_line
-%token <string> BYE CD STRING ALIAS END PRINTENV
+%token <string> BYE CD STRING ALIAS END PRINTENV UNSETENV UNALIAS
 
 %%
 cmd_line    :
@@ -25,6 +23,8 @@ cmd_line    :
 	| CD STRING END        			{runCD($2); return 1;}
 	| ALIAS STRING STRING END		{runSetAlias($2, $3); return 1;}
     | PRINTENV END                  {printEnv(); return 1;}
+    | UNSETENV STRING END           {unsetEnv($2); return 1;}    
+    | UNALIAS STRING END            {unalias($2); return 1;}  
 
 %%
 
@@ -98,5 +98,57 @@ int printEnv(){
     for (int i = 0; i < varIndex; i++){
         printf("%s = %s\n", varTable.var[i], varTable.word[i]);
     }
+    return 1;
+}
+
+int unsetEnv(char *variable){
+    int var_location = -1;
+    for (int i = 0; i < varIndex; i++){
+        if(strcmp(varTable.var[i], variable) == 0){
+            var_location = i;
+        }
+    }
+
+    if (var_location != -1){
+        strcpy(varTable.var[var_location], "");
+        strcpy(varTable.word[var_location], "");
+
+        for(int i = var_location + 1; i < varIndex; i++){
+            strcpy(varTable.var[i - 1], varTable.var[i]);
+            strcpy(varTable.word[i - 1], varTable.word[i]);
+        }
+        strcpy(varTable.var[varIndex - 1], "");
+        strcpy(varTable.word[varIndex - 1], "");
+
+
+        varIndex--;
+    }
+    return 1;
+}
+
+int unalias(char *variable){
+    int var_location = -1;
+    for (int i = 0; i < aliasIndex; i++){
+        if(strcmp(aliasTable.name[i], variable) == 0){
+            var_location = i;
+        }
+    }
+
+    if (var_location != -1){
+        strcpy(aliasTable.name[var_location], "");
+        strcpy(aliasTable.word[var_location], "");
+
+        for(int i = var_location + 1; i < aliasIndex; i++){
+            strcpy(aliasTable.name[i - 1], aliasTable.name[i]);
+            strcpy(aliasTable.word[i - 1], aliasTable.word[i]);
+        }
+        strcpy(aliasTable.name[aliasIndex - 1], "");
+        strcpy(aliasTable.word[aliasIndex - 1], "");
+
+
+        aliasIndex--;
+    }
+
+    useAlias = true;
     return 1;
 }

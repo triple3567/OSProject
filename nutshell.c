@@ -9,6 +9,7 @@ char *getcwd(char *buf, size_t size);
 
 int main()
 {
+    useAlias = true;
     aliasIndex = 0;
     varIndex = 0;
     char cwd[PATH_MAX];
@@ -40,7 +41,7 @@ int main()
     strcpy(aliasTable.word[aliasIndex], cwd);
     aliasIndex++;
     system("clear");
-	printf("Welcome to the Nutshell\n");
+	printf("Welcome to the Nutshell by Marcus Elosegui and Eric Ho\n");
     
     while(1){
         printf("[%s]>> ", varTable.word[0]);
