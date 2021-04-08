@@ -21,7 +21,27 @@ bool ifAlias(char* name){
     }
     return false;
 }
+char* subEnvVar(char* name){
+    for (int i = 0; i < varIndex; i++){
+        if (strcmp(varTable.var[i], name) == 0){
+             printf("%s = %s\n", name, varTable.word[i]);
+            return varTable.word[i];
+        }
+    }
+    return name;
+}
+bool ifEnvVar(char* name){
+    for (int i = 0; i < varIndex; i++){
+        if (strcmp(varTable.var[i], name) == 0){
+            return true;
+        }
+    }
+    return false;
+}
 %}
+
+
+
 %array
 %option noyywrap
 
@@ -29,10 +49,14 @@ CHAR            [.A-Za-z0-9!\/_-][.A-Za-z0-9!\/_-]*
 ANYCHAR            [)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -][)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -]*
 
 %x string_condition
+%x env_var_condition
 %%
 
 <string_condition>{ANYCHAR}+     { yylval.string = strdup(yytext); return STRING;}
 <string_condition>[\"]          {BEGIN(INITIAL);}
+
+<env_var_condition>{ANYCHAR}+    { yylval.string = subEnvVar(strdup(yytext)); return STRING;}
+<env_var_condition>[\}]         {BEGIN(INITIAL);}
 
 [ ]		            { }
 bye                 { return BYE; }
@@ -42,7 +66,8 @@ printenv            { return PRINTENV;}
 unsetenv            { return UNSETENV;}
 unalias             { useAlias = false; return UNALIAS;}
 "\n"		        { return END; }
-[\"]                 { BEGIN(string_condition); }
+[\"]                { BEGIN(string_condition); }
+[\$][\{]              { BEGIN(env_var_condition); }
 {CHAR}+              {if(ifAlias(yytext) && useAlias) {
                         printf("yytext before sub: %s\n", yytext);
                         // source: https://www.cs.princeton.edu/~appel/modern/c/software/flex/flex.html

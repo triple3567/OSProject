@@ -53,7 +53,7 @@ int runCD(char* arg) {
 		}
 		else {
 			strcpy(varTable.word[0], temp);
-			printf("Directory not found\n");
+			printf("%s Directory not found\n", arg);
 			return 1;
 		}
 
