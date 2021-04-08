@@ -1,6 +1,6 @@
 # OSProject
 
-<<<Completed>>>
+## COMPLETED
 bye
 cd
 alias [word] [alias]
