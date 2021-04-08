@@ -9,4 +9,4 @@ unsetenv variable
 unalias alias
 " " string condition
 enviroment variable substitution ${name}
-~ expantion
+~ expantion (incomplete)
