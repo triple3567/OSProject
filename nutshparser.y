@@ -36,6 +36,9 @@ int yyerror(char *s) {
 
 int runCD(char* arg) {
 	if (arg[0] != '/') { // arg is relative path
+		char* temp;
+		temp = malloc(1000);
+		strcpy(temp, varTable.word[0]);
 		strcat(varTable.word[0], "/");
 		strcat(varTable.word[0], arg);
 
@@ -49,10 +52,12 @@ int runCD(char* arg) {
 			}
 		}
 		else {
-			//strcpy(varTable.word[0], varTable.word[0]); // fix
+			strcpy(varTable.word[0], temp);
 			printf("Directory not found\n");
 			return 1;
 		}
+
+		free(temp);
 	}
 	else { // arg is absolute path
 		if(chdir(arg) == 0){
