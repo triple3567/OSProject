@@ -58,6 +58,24 @@ ANYCHAR            [)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -][)(*&%$#@!`;,\.a-zA-Z0-9'/*_
 <env_var_condition>{ANYCHAR}+    { yylval.string = subEnvVar(strdup(yytext)); return STRING;}
 <env_var_condition>[\}]         {BEGIN(INITIAL);}
 
+[\~]{CHAR}*            { 
+                        char* home = strdup(varTable.word[1]);
+                        char* yycopy = malloc(strlen(yytext) - 1);
+                        for (int i = 1; i < strlen(yytext); i++){
+                            yycopy[i - 1] = yytext[i];
+                        }
+                        
+                        char* new_str = malloc(strlen(yycopy) + strlen(home));
+                        strcat(new_str,home);
+                        strcat(new_str,yycopy);
+                        printf("%s\n",new_str);
+                        yylval.string = strdup(new_str);
+
+                        free(home);
+                        free(yycopy);
+                        free(new_str);
+                        return STRING;
+                    }
 [ ]		            { }
 bye                 { return BYE; }
 cd		            { return CD;}
@@ -76,6 +94,7 @@ unalias             { useAlias = false; return UNALIAS;}
                                unput( yycopy[i] );
                            free( yycopy );
                     } else {
+
                         printf("yytext: %s\n", yytext);
                         yylval.string = strdup(yytext);
                         return STRING;

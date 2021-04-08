@@ -8,4 +8,5 @@ printenv
 unsetenv variable
 unalias alias
 " " string condition
-enviroment variable substitution
+enviroment variable substitution ${name}
+~ expantion
