@@ -1,20 +1,103 @@
 %{
-    #include "nutshscanner.h"
+#include "nutshparser.tab.h"
+#include <string.h>
+#include "global.h"
+#include <stdbool.h>
+
+//#define unput(c) {yytchar= (c); if(yytchar=='\n') {yylineno--; *yysptr++=yytchar;}
+char* subAliases(char* name){
+    for (int i = 0; i < aliasIndex; i++) {
+        if(strcmp(aliasTable.name[i], name) == 0) {
+            return aliasTable.word[i];
+        }
+    }
+    return name;
+}
+bool ifAlias(char* name){
+    for (int i = 0; i < aliasIndex; i++) {
+        if(strcmp(aliasTable.name[i], name) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+char* subEnvVar(char* name){
+    for (int i = 0; i < varIndex; i++){
+        if (strcmp(varTable.var[i], name) == 0){
+             printf("%s = %s\n", name, varTable.word[i]);
+            return varTable.word[i];
+        }
+    }
+    return name;
+}
+bool ifEnvVar(char* name){
+    for (int i = 0; i < varIndex; i++){
+        if (strcmp(varTable.var[i], name) == 0){
+            return true;
+        }
+    }
+    return false;
+}
 %}
 
-DIGIT [0-9]
-QUOTE ["]
-NOTQUOTE[^"]
-META [/</>/|/&]
+
+
+%array
+%option noyywrap
+
+CHAR            [.A-Za-z0-9!\/_-][.A-Za-z0-9!\/_-]*
+ANYCHAR            [)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -][)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -]*
+
+%x string_condition
+%x env_var_condition
 %%
 
-[ \t]+ return WHITE_SPACE;
-[..] return DOT_DOT;
-[/.] return DOT;
-[~] return TILDE;
-{META} return METACHARACTER;
+<string_condition>{ANYCHAR}+     { yylval.string = strdup(yytext); return STRING;}
+<string_condition>[\"]          {BEGIN(INITIAL);}
 
-[A-Za-z{DIGIT}]+ return WORD;
+<env_var_condition>{ANYCHAR}+    { yylval.string = subEnvVar(strdup(yytext)); return STRING;}
+<env_var_condition>[\}]         {BEGIN(INITIAL);}
 
-. return UNDEFINED;
+[\~]{CHAR}*            { 
+                        char* home = strdup(varTable.word[1]);
+                        char* yycopy = malloc(strlen(yytext) - 1);
+                        for (int i = 1; i < strlen(yytext); i++){
+                            yycopy[i - 1] = yytext[i];
+                        }
+                        
+                        char* new_str = malloc(strlen(yycopy) + strlen(home));
+                        strcat(new_str,home);
+                        strcat(new_str,yycopy);
+                        printf("%s\n",new_str);
+                        yylval.string = strdup(new_str);
 
+                        free(home);
+                        free(yycopy);
+                        free(new_str);
+                        return STRING;
+                    }
+[ ]		            { }
+bye                 { return BYE; }
+cd		            { return CD;}
+alias		        { return ALIAS; }
+printenv            { return PRINTENV;}
+unsetenv            { return UNSETENV;}
+unalias             { useAlias = false; return UNALIAS;}
+"\n"		        { return END; }
+[\"]                { BEGIN(string_condition); }
+[\$][\{]              { BEGIN(env_var_condition); }
+{CHAR}+              {if(ifAlias(yytext) && useAlias) {
+                        printf("yytext before sub: %s\n", yytext);
+                        // source: https://www.cs.princeton.edu/~appel/modern/c/software/flex/flex.html
+                           char *yycopy = strdup( subAliases(yytext) );
+                           for ( int i = strlen(subAliases(yytext)) - 1; i >= 0; --i )
+                               unput( yycopy[i] );
+                           free( yycopy );
+                    } else {
+
+                        printf("yytext: %s\n", yytext);
+                        yylval.string = strdup(yytext);
+                        return STRING;
+                    };
+                     }
+%%

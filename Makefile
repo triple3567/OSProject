@@ -18,4 +18,4 @@ nutshell:
 
 
 clean:
-	rm nutshparser.tab.c nutshparser.tab.h lex.yy.c lex_test_main.o
+	rm nutshparser.tab.c nutshparser.tab.h lex.yy.c lex_test_main.o nutshell.o
