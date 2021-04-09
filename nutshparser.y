@@ -4,13 +4,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 #include "global.h"
 
 int yylex();
 int yyerror(char *s);
 int runCD(char* arg);
 int runSetAlias(char *name, char *word);
-int exec_cmd(char* arg, char* arg2);
+int exec_cmd(int arg_num);
 
 %}
 
@@ -31,12 +32,11 @@ cmd_line    :
     | PRINTENV END                  {printEnv(); return 1;}
     | UNSETENV STRING END           {unsetEnv($2); return 1;}    
     | UNALIAS STRING END            {unalias($2); return 1;} 
-    | cmds END                      { printf("\ncmd: %d\n",cmd_num); cmd_num = 0;} //exec_cmd($1, $2);
-                                      
+    | cmds END                      {exec_cmd(cmd_num); cmd_num = 0; return 1;}                      
     ;
 cmds:
-    STRING                          {cmd_num++; printf($1);}
-    | STRING cmds                   {cmd_num++; printf($1);}
+    STRING                          {argTable.arg[cmd_num] = $1; cmd_num++;}
+    | STRING cmds                   {argTable.arg[cmd_num] = $1; cmd_num++;}
     ;
 %%
 
@@ -45,17 +45,38 @@ int yyerror(char *s) {
   return 0;
   }
 
-int exec_cmd(char* arg, char* arg2)
+int exec_cmd(int arg_num)
 {
     char* path[256]; 
     strcpy(path, "/usr/bin/");
-    strcat(path, arg);
-    char* exe[3] = { path, arg2, NULL};
-    execvp(exe[0], exe);
-    //char* test[3] = {"/usr/bin/wc", "nutshell.c", NULL};
-    //execvp(test[0], test);
-    //printf("output: %s\n",path);
-    //printf("arg2: %s\n", arg2);
+    strcat(path, argTable.arg[arg_num-1]);
+
+    char** exe = malloc(arg_num+2);
+
+    int exe_index = arg_num-1;
+    for(int i = 0; i < arg_num; i++)
+    {
+        exe[exe_index--] = argTable.arg[i];
+    }
+
+    exe[0] = path;
+    exe[arg_num] = NULL;
+
+    //for(int i = 0; i < arg_num+1; i++)
+        //printf("\nexe[%d]: %s\n", i, exe[i]);
+
+    pid_t pid;
+    int status;
+    if(fork() == 0){
+        status = execvp(exe[0], exe);
+    }
+    else
+        return 1;
+
+    //strcat(path, arg);
+
+    //char* exe[3] = { path, arg2, NULL};
+    //execvp(exe[0], exe);
     
     return 1;
 }
