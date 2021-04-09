@@ -32,7 +32,7 @@ cmd_line    :
     | PRINTENV END                  {printEnv(); return 1;}
     | UNSETENV STRING END           {unsetEnv($2); return 1;}    
     | UNALIAS STRING END            {unalias($2); return 1;} 
-    | cmds END                      {exec_cmd(cmd_num); cmd_num = 0; return 1;}                      
+    | cmds END                      {exec_cmd(cmd_num); cmd_num = 0; YYACCEPT;}                      
     ;
 cmds:
     STRING                          {argTable.arg[cmd_num] = $1; cmd_num++;}
@@ -65,13 +65,12 @@ int exec_cmd(int arg_num)
     //for(int i = 0; i < arg_num+1; i++)
         //printf("\nexe[%d]: %s\n", i, exe[i]);
 
-    pid_t pid;
-    int status;
-    if(fork() == 0){
-        status = execvp(exe[0], exe);
+    pid_t pid = fork();
+
+    if(pid == 0){
+        int status = execvp(exe[0], exe);
     }
-    else
-        return 1;
+    wait(pid, NULL, 0);
 
     //strcat(path, arg);
 
