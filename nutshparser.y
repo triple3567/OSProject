@@ -31,12 +31,12 @@ cmd_line    :
     | PRINTENV END                  {printEnv(); return 1;}
     | UNSETENV STRING END           {unsetEnv($2); return 1;}    
     | UNALIAS STRING END            {unalias($2); return 1;} 
-    | STRING STRING END               {/*cmd_num++;printf("cmd: %d",cmd_num);*/
-                                     exec_cmd($1, $2);} 
+    | cmds END                      { printf("\ncmd: %d\n",cmd_num); cmd_num = 0;} //exec_cmd($1, $2);
+                                      
     ;
 cmds:
-    STRING                          {printf($1);}
-    | STRING cmds                   {printf($1);}
+    STRING                          {cmd_num++; printf($1);}
+    | STRING cmds                   {cmd_num++; printf($1);}
     ;
 %%
 
