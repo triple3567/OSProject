@@ -10,12 +10,17 @@ int yylex();
 int yyerror(char *s);
 int runCD(char* arg);
 int runSetAlias(char *name, char *word);
+int exec_cmd(char* arg, char* arg2);
+
 %}
 
 %union {char *string;}
 
+%code {extern int cmd_num = 0;}
+%code {extern char** args;}
 %start cmd_line
 %token <string> BYE CD STRING ALIAS END PRINTENV UNSETENV UNALIAS
+
 
 %%
 cmd_line    :
@@ -25,14 +30,36 @@ cmd_line    :
     | ALIAS END                     {printAlias(); return 1;}
     | PRINTENV END                  {printEnv(); return 1;}
     | UNSETENV STRING END           {unsetEnv($2); return 1;}    
-    | UNALIAS STRING END            {unalias($2); return 1;}  
-
+    | UNALIAS STRING END            {unalias($2); return 1;} 
+    | STRING STRING END               {/*cmd_num++;printf("cmd: %d",cmd_num);*/
+                                     exec_cmd($1, $2);} 
+    ;
+cmds:
+    STRING                          {printf($1);}
+    | STRING cmds                   {printf($1);}
+    ;
 %%
 
 int yyerror(char *s) {
   printf("%s\n",s);
   return 0;
   }
+
+int exec_cmd(char* arg, char* arg2)
+{
+    char* path[256]; 
+    strcpy(path, "/usr/bin/");
+    strcat(path, arg);
+    char* exe[3] = { path, arg2, NULL};
+    execvp(exe[0], exe);
+    //char* test[3] = {"/usr/bin/wc", "nutshell.c", NULL};
+    //execvp(test[0], test);
+    //printf("output: %s\n",path);
+    //printf("arg2: %s\n", arg2);
+    
+    return 1;
+}
+
 
 int runCD(char* arg) {
 	if (arg[0] != '/') { // arg is relative path
