@@ -25,6 +25,7 @@ int exec_cmd(char* arg, char* arg2);
 %%
 cmd_line    :
 	BYE END 		                {exit(1); return 1; }
+    | CD END                        {runCD(varTable.word[1]); return 1;}
 	| CD STRING END        			{runCD($2); return 1;}
 	| ALIAS STRING STRING END		{runSetAlias($2, $3); return 1;}
     | ALIAS END                     {printAlias(); return 1;}

@@ -95,7 +95,7 @@ char* subWildCard(char* word){
 %option noyywrap
 
 CHAR            [\?\*.A-Za-z0-9!\/_-][\?\*.A-Za-z0-9!\/_-]*
-ANYCHAR         [)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -][)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -]*
+ANYCHAR         [:)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -][:)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -]*
 
 %x string_condition
 %x env_var_condition
