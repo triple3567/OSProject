@@ -1,7 +1,9 @@
 %{
 #include "nutshparser.tab.h"
-#include <string.h>
 #include "global.h"
+#include <string.h>
+#include <dirent.h> 
+#include <fnmatch.h>
 #include <stdbool.h>
 
 //#define unput(c) {yytchar= (c); if(yytchar=='\n') {yylineno--; *yysptr++=yytchar;}
@@ -38,6 +40,53 @@ bool ifEnvVar(char* name){
     }
     return false;
 }
+bool ifWildcard(char* word){
+    char compare1 = '?';
+    char compare2 = '*';
+    for (int i = 0; i < strlen(word); i++){
+        if (word[i] == compare1 || word[i] == compare2){
+            return true;
+        }
+    }
+    return false;
+}
+char* subWildCard(char* word){
+    char files[128][100];
+    int files_index = 0;
+    int allocation = 0;
+
+    DIR *d;
+    struct dirent *dir;
+    d = opendir(varTable.word[0]);
+    if (d) {
+        while ((dir = readdir(d)) != NULL) {
+
+            if (fnmatch(word, dir->d_name, 0) == 0){
+                strcpy(files[files_index], dir->d_name);
+                allocation += strlen(dir->d_name) + 1;
+                files_index++;
+            }
+            
+        }
+    closedir(d);
+    }
+
+    printf("FILES MATCHED = %i\n", files_index);
+    char* yy_string;
+    yy_string = malloc(allocation + 1000);
+    yy_string[0] = '\0';
+    for(int i = 0; i < files_index; i++){
+        strcat(yy_string, files[i]);
+        if (i != files_index - 1){
+            strcat(yy_string, " ");
+        }
+    }
+    printf("yy_string = %s\n", yy_string);
+
+    
+    return yy_string;
+}
+
 %}
 
 
@@ -45,8 +94,8 @@ bool ifEnvVar(char* name){
 %array
 %option noyywrap
 
-CHAR            [.A-Za-z0-9!\/_-][.A-Za-z0-9!\/_-]*
-ANYCHAR            [)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -][)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -]*
+CHAR            [\?\*.A-Za-z0-9!\/_-][\?\*.A-Za-z0-9!\/_-]*
+ANYCHAR         [)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -][)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -]*
 
 %x string_condition
 %x env_var_condition
@@ -93,11 +142,19 @@ unalias             { useAlias = false; return UNALIAS;}
                            for ( int i = strlen(subAliases(yytext)) - 1; i >= 0; --i )
                                unput( yycopy[i] );
                            free( yycopy );
-                    } else {
+                    } 
+                    else if (ifWildcard(yytext)) {
+                            char *yycopy = strdup( subWildCard(yytext));
+                            for ( int i = strlen(subWildCard(yytext)) - 1; i >= 0; --i )
+                               unput( yycopy[i] );
+                            free( yycopy );
 
+                        }
+                    else {
                         printf("yytext: %s\n", yytext);
                         yylval.string = strdup(yytext);
                         return STRING;
-                    };
-                     }
+                    }
+};
+                     
 %%
