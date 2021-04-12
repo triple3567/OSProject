@@ -68,7 +68,6 @@ ANYCHAR            [)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -][)(*&%$#@!`;,\.a-zA-Z0-9'/*_
                         char* new_str = malloc(strlen(yycopy) + strlen(home));
                         strcat(new_str,home);
                         strcat(new_str,yycopy);
-                        printf("%s\n",new_str);
                         yylval.string = strdup(new_str);
 
                         free(home);
@@ -80,6 +79,7 @@ ANYCHAR            [)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -][)(*&%$#@!`;,\.a-zA-Z0-9'/*_
 bye                 { return BYE; }
 cd		            { return CD;}
 alias		        { return ALIAS; }
+setenv              { return SETENV; }
 printenv            { return PRINTENV;}
 unsetenv            { return UNSETENV;}
 unalias             { useAlias = false; return UNALIAS;}
