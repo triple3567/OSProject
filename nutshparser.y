@@ -11,7 +11,7 @@ int yylex();
 int yyerror(char *s);
 int runCD(char* arg);
 int runSetAlias(char *name, char *word);
-int exec_cmd(int arg_num);
+int exec_cmd(char** cmd, int arg_num);
 
 %}
 
@@ -32,7 +32,7 @@ cmd_line    :
     | PRINTENV END                  {printEnv(); return 1;}
     | UNSETENV STRING END           {unsetEnv($2); return 1;}    
     | UNALIAS STRING END            {unalias($2); return 1;} 
-    | cmds END                      {exec_cmd(cmd_num); cmd_num = 0; YYACCEPT;}                      
+    | cmds END                      {parse_cmd(cmd_num); cmd_num = 0; YYACCEPT;}                      
     ;
 cmds:
     STRING                          {argTable.arg[cmd_num] = $1; cmd_num++;}
@@ -45,7 +45,27 @@ int yyerror(char *s) {
   return 0;
   }
 
-int exec_cmd(int arg_num)
+int parse_cmd(int arg_num)
+{
+    char** partition_cmd[256];
+    int partition_arg = 0;
+    for(int i = 0; i < arg_num; i++)
+    {
+        if(strcmp(argTable.arg[i], ">") == 0)
+        {
+            printf("\n>>>>\n");
+        }
+        partition_arg[partition_arg] = argTable.arg[i];        
+        if(i == arg_num-1)
+        {
+            exec_cmd(partition_cmd, partition_arg);
+        }
+        partition_arg++;
+    }
+}
+
+
+int exec_cmd(char** cmd, int arg_num)
 {
     /* different commands in different paths */
     char* path[256]; 
