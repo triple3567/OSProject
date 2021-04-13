@@ -20,7 +20,7 @@ int exec_cmd(char** cmd, int arg_num);
 %code {extern int cmd_num = 0;}
 %code {extern char** args;}
 %start cmd_line
-%token <string> BYE CD STRING ALIAS END PRINTENV UNSETENV UNALIAS
+%token <string> BYE CD STRING ALIAS END PRINTENV UNSETENV UNALIAS METACHARACTER
 
 
 %%
@@ -36,7 +36,9 @@ cmd_line    :
     ;
 cmds:
     STRING                          {argTable.arg[cmd_num] = $1; cmd_num++;}
+    | METACHARACTER                          {argTable.arg[cmd_num] = $1; cmd_num++;}
     | STRING cmds                   {argTable.arg[cmd_num] = $1; cmd_num++;}
+    | METACHARACTER cmds            {printf("\nMETA %s\n", $1); argTable.arg[cmd_num] = $1; cmd_num++;}
     ;
 %%
 
@@ -49,18 +51,19 @@ int parse_cmd(int arg_num)
 {
     char** partition_cmd[256];
     int partition_arg = 0;
+    printf("\nENTER PARSE\n");
     for(int i = 0; i < arg_num; i++)
     {
+        printf("\nTable: %s\n", argTable.arg[i]);
         if(strcmp(argTable.arg[i], ">") == 0)
         {
             printf("\n>>>>\n");
         }
-        partition_arg[partition_arg] = argTable.arg[i];        
+        partition_cmd[partition_arg++] = argTable.arg[i];        
         if(i == arg_num-1)
         {
             exec_cmd(partition_cmd, partition_arg);
         }
-        partition_arg++;
     }
 }
 
@@ -119,7 +122,7 @@ int exec_cmd(char** cmd, int arg_num)
         waitpid(pid, &status, 0);
     }
     
-    free(exe);
+    //free(exe);
     
     return 1;
 }

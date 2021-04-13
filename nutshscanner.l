@@ -47,6 +47,7 @@ bool ifEnvVar(char* name){
 
 CHAR            [.A-Za-z0-9!\/_-][.A-Za-z0-9!\/_-]*
 ANYCHAR            [)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -][)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -]*
+META            [/</>/|/"/&]
 
 %x string_condition
 %x env_var_condition
@@ -84,6 +85,7 @@ printenv            { return PRINTENV;}
 unsetenv            { return UNSETENV;}
 unalias             { useAlias = false; return UNALIAS;}
 "\n"		        { return END; }
+{META}              { yylval.string = strdup(yytext); return METACHARACTER;}
 [\"]                { BEGIN(string_condition); }
 [\$][\{]              { BEGIN(env_var_condition); }
 {CHAR}+              {if(ifAlias(yytext) && useAlias) {
