@@ -26,7 +26,7 @@ bool ifAlias(char* name){
 char* subEnvVar(char* name){
     for (int i = 0; i < varIndex; i++){
         if (strcmp(varTable.var[i], name) == 0){
-             printf("%s = %s\n", name, varTable.word[i]);
+             printf("Enviroment Variable %s = %s\n", name, varTable.word[i]);
             return varTable.word[i];
         }
     }
@@ -94,8 +94,8 @@ char* subWildCard(char* word){
 %array
 %option noyywrap
 
-CHAR            [\?\*.A-Za-z0-9!\/_-][\?\*.A-Za-z0-9!\/_-]*
-ANYCHAR         [:)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -][:)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -]*
+CHAR            [~\:\?\*.A-Za-z0-9!\/_-][~\:\?\*.A-Za-z0-9!\/_-]*
+ANYCHAR         [\:)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -][\:)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -]*
 
 %x string_condition
 %x env_var_condition
@@ -104,7 +104,11 @@ ANYCHAR         [:)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -][:)(*&%$#@!`;,\.a-zA-Z0-9'/*_=
 <string_condition>{ANYCHAR}+     { yylval.string = strdup(yytext); return STRING;}
 <string_condition>[\"]          {BEGIN(INITIAL);}
 
-<env_var_condition>{ANYCHAR}+    { yylval.string = subEnvVar(strdup(yytext)); return STRING;}
+<env_var_condition>{ANYCHAR}+    { char* yycopy = strdup(subEnvVar(yytext));
+                                    for (int i = strlen(yycopy) - 1; i >= 0; --i){
+                                        unput(yycopy[i]);
+                                    }
+                                 }
 <env_var_condition>[\}]         {BEGIN(INITIAL);}
 
 [\~]{CHAR}*            { 

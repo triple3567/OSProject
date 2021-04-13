@@ -137,6 +137,11 @@ int setEnv(char* var, char* word){
             return 1;
         }
     }
+
+    strcpy(varTable.var[varIndex], var);
+    strcpy(varTable.word[varIndex], word);
+    varIndex++;
+    printf("Eviroment Variable %s Added \n", var);
     return 1;
 }
 
