@@ -47,10 +47,16 @@ int yyerror(char *s) {
 
 int exec_cmd(int arg_num)
 {
+    /* different commands in different paths */
     char* path[256]; 
     strcpy(path, "/usr/bin/");
     strcat(path, argTable.arg[arg_num-1]);
+    
+    char* path2[256];
+    strcpy(path2, "/bin/");
+    strcat(path2, argTable.arg[arg_num-1]);
 
+    /* creating and filling in array of arguments */
     char** exe = malloc(arg_num+2);
 
     int exe_index = arg_num-1;
@@ -59,23 +65,41 @@ int exec_cmd(int arg_num)
         exe[exe_index--] = argTable.arg[i];
     }
 
-    exe[0] = path;
-    exe[arg_num] = NULL;
+    /* select the correct path by determining if file exists in that directory */
+    if(access(path, F_OK) == 0){
+        exe[0] = path;
+    }
+    else if(access(path2, F_OK) == 0)
+        exe[0] = path2;
+    else
+        return 0;
 
+    exe[arg_num] = NULL;
+    
+    
     //for(int i = 0; i < arg_num+1; i++)
         //printf("\nexe[%d]: %s\n", i, exe[i]);
 
-    pid_t pid = fork();
-
-    if(pid == 0){
-        int status = execvp(exe[0], exe);
+    /* fork to call execv to execute shell command
+        waits to finish to display result before asking for next input */
+    pid_t pid;
+    int status;
+    
+    if((pid = fork()) < 0){
+        printf("Fork failed\n");
+        exit(1);
     }
-    wait(pid, NULL, 0);
-
-    //strcat(path, arg);
-
-    //char* exe[3] = { path, arg2, NULL};
-    //execvp(exe[0], exe);
+    else if(pid == 0){
+        if(status = execv(exe[0], exe) < 0){
+            printf("Error exec failed\n");
+            exit(1);
+        }
+    }
+    else{
+        waitpid(pid, &status, 0);
+    }
+    
+    free(exe);
     
     return 1;
 }
