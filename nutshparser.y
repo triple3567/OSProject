@@ -4,13 +4,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 #include "global.h"
 
 int yylex();
 int yyerror(char *s);
 int runCD(char* arg);
 int runSetAlias(char *name, char *word);
-int exec_cmd(char* arg, char* arg2);
+int exec_cmd(char** cmd, int arg_num);
 
 %}
 
@@ -19,7 +20,7 @@ int exec_cmd(char* arg, char* arg2);
 %code {extern int cmd_num = 0;}
 %code {extern char** args;}
 %start cmd_line
-%token <string> BYE CD STRING ALIAS SETENV END PRINTENV UNSETENV UNALIAS 
+%token <string> BYE CD STRING ALIAS SETENV END PRINTENV UNSETENV UNALIAS METACHARACTER
 
 
 %%
@@ -33,12 +34,13 @@ cmd_line    :
     | PRINTENV END                  {printEnv(); return 1;}
     | UNSETENV STRING END           {unsetEnv($2); return 1;}    
     | UNALIAS STRING END            {unalias($2); return 1;} 
-    | STRING STRING END             {
-                                    exec_cmd($1, $2);
-                                    };
+    | cmds END                      {parse_cmd(cmd_num); cmd_num = 0; YYACCEPT;}                      
+    ;
 cmds:
-    STRING                          {printf($1);}
-    | STRING cmds                   {printf($1);}
+    STRING                          {argTable.arg[cmd_num] = $1; cmd_num++;}
+    | METACHARACTER                          {argTable.arg[cmd_num] = $1; cmd_num++;}
+    | STRING cmds                   {argTable.arg[cmd_num] = $1; cmd_num++;}
+    | METACHARACTER cmds            {printf("\nMETA %s\n", $1); argTable.arg[cmd_num] = $1; cmd_num++;}
     ;
 %%
 
@@ -47,17 +49,82 @@ int yyerror(char *s)  {
   return 0;
   }
 
-int exec_cmd(char* arg, char* arg2)
+int parse_cmd(int arg_num)
 {
+    char** partition_cmd[256];
+    int partition_arg = 0;
+    printf("\nENTER PARSE\n");
+    for(int i = 0; i < arg_num; i++)
+    {
+        printf("\nTable: %s\n", argTable.arg[i]);
+        if(strcmp(argTable.arg[i], ">") == 0)
+        {
+            printf("\n>>>>\n");
+        }
+        partition_cmd[partition_arg++] = argTable.arg[i];        
+        if(i == arg_num-1)
+        {
+            exec_cmd(partition_cmd, partition_arg);
+        }
+    }
+}
+
+
+int exec_cmd(char** cmd, int arg_num)
+{
+    /* different commands in different paths */
     char* path[256]; 
     strcpy(path, "/usr/bin/");
-    strcat(path, arg);
-    char* exe[3] = { path, arg2, NULL};
-    execvp(exe[0], exe);
-    //char* test[3] = {"/usr/bin/wc", "nutshell.c", NULL};
-    //execvp(test[0], test);
-    //printf("output: %s\n",path);
-    //printf("arg2: %s\n", arg2);
+    strcat(path, argTable.arg[arg_num-1]);
+    
+    char* path2[256];
+    strcpy(path2, "/bin/");
+    strcat(path2, argTable.arg[arg_num-1]);
+
+    /* creating and filling in array of arguments */
+    char** exe = malloc(arg_num+2);
+
+    int exe_index = arg_num-1;
+    for(int i = 0; i < arg_num; i++)
+    {
+        exe[exe_index--] = argTable.arg[i];
+    }
+
+    /* select the correct path by determining if file exists in that directory */
+    if(access(path, F_OK) == 0){
+        exe[0] = path;
+    }
+    else if(access(path2, F_OK) == 0)
+        exe[0] = path2;
+    else
+        return 0;
+
+    exe[arg_num] = NULL;
+    
+    
+    //for(int i = 0; i < arg_num+1; i++)
+        //printf("\nexe[%d]: %s\n", i, exe[i]);
+
+    /* fork to call execv to execute shell command
+        waits to finish to display result before asking for next input */
+    pid_t pid;
+    int status;
+    
+    if((pid = fork()) < 0){
+        printf("Fork failed\n");
+        exit(1);
+    }
+    else if(pid == 0){
+        if(status = execv(exe[0], exe) < 0){
+            printf("Error exec failed\n");
+            exit(1);
+        }
+    }
+    else{
+        waitpid(pid, &status, 0);
+    }
+    
+    //free(exe);
     
     return 1;
 }
