@@ -64,6 +64,7 @@ int exec_cmd(char* arg, char* arg2)
 
 
 int runCD(char* arg) {
+
 	if (arg[0] != '/') { // arg is relative path
 		char* temp;
 		temp = malloc(1000);
