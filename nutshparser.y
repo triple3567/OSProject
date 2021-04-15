@@ -131,6 +131,7 @@ int exec_cmd(char** cmd, int arg_num)
 
 
 int runCD(char* arg) {
+
 	if (arg[0] != '/') { // arg is relative path
 		char* temp;
 		temp = malloc(1000);
