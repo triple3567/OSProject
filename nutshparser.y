@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <fcntl.h>
 #include "global.h"
 
 int yylex();
@@ -36,9 +37,8 @@ cmd_line    :
     ;
 cmds:
     STRING                          {argTable.arg[cmd_num] = $1; cmd_num++;}
-    | METACHARACTER                          {argTable.arg[cmd_num] = $1; cmd_num++;}
     | STRING cmds                   {argTable.arg[cmd_num] = $1; cmd_num++;}
-    | METACHARACTER cmds            {printf("\nMETA %s\n", $1); argTable.arg[cmd_num] = $1; cmd_num++;}
+    | METACHARACTER cmds            {argTable.arg[cmd_num] = $1; cmd_num++;}
     ;
 %%
 
@@ -47,20 +47,98 @@ int yyerror(char *s) {
   return 0;
   }
 
+int test()
+{
+    char* out;
+    pid_t pid = fork();
+    if(pid == 0){
+    int fd = open("out_test.txt", O_WRONLY | O_CREAT, 0644);
+
+    dup2(fd, STDOUT_FILENO);
+    close(fd);
+    printf("Please work");
+    char* args = {"/bin/cat", "testFolder/test.txt", NULL};
+    execv(args[0], args);
+    }
+    //
+    /*
+    char* args = {"/bin/cat", "testFolder/test.txt", NULL};
+    execv(args[0], args);
+    }
+    else{
+        waitpid(pid);
+    }*/
+}
+
 int parse_cmd(int arg_num)
 {
     char** partition_cmd[256];
     int partition_arg = 0;
-    printf("\nENTER PARSE\n");
+
+    char** reverse[arg_num];
+    int exe_index = arg_num-1;
     for(int i = 0; i < arg_num; i++)
     {
-        printf("\nTable: %s\n", argTable.arg[i]);
-        if(strcmp(argTable.arg[i], ">") == 0)
+        reverse[exe_index--] = argTable.arg[i];
+    }
+
+    char* in_file = NULL;
+    char* out_file = NULL;
+    bool entered = true;
+    
+    for(int i = 0; i < arg_num; i++)
+    {
+        if(strcmp(reverse[i], ">") == 0)
         {
-            printf("\n>>>>\n");
+            out_file = reverse[i+1];
+            entered = false;
+            int pid = fork();
+
+            if(pid == 0)
+            {
+                if(out_file != NULL)
+                {
+                    int fd;
+                    if((fd = open(out_file, O_WRONLY | O_CREAT, 0644)) < 0)
+                    {
+                        perror("Unable to open file");
+                        exit(1);
+                    }
+                    dup2(fd, STDOUT_FILENO);
+                    dup2(fd, STDERR_FILENO);
+                    close(fd);
+                }
+                exec_cmd(partition_cmd, partition_arg);
+                exit(1);
+            }
         }
-        partition_cmd[partition_arg++] = argTable.arg[i];        
-        if(i == arg_num-1)
+        else if(strcmp(reverse[i], "<") == 0)
+        {
+            in_file = reverse[i+1];
+            entered = false;
+            int pid = fork();
+
+            if(pid == 0)
+            {
+                if(out_file != NULL)
+                {
+                    int fd;
+                    if(fd = open(in_file, O_RDONLY) < 0)
+                    {
+                        perror("Unable to open file");
+                        exit(1);
+                    }
+                    dup2(fd, STDIN_FILENO);
+                    dup2(fd, STDERR_FILENO);
+                    close(fd);
+                }
+                exec_cmd(partition_cmd, partition_arg);
+                exit(1);
+            }
+        }
+
+        partition_cmd[partition_arg++] = reverse[i];       
+        if(i == arg_num-1 && entered)
         {
             exec_cmd(partition_cmd, partition_arg);
         }
@@ -73,11 +151,13 @@ int exec_cmd(char** cmd, int arg_num)
     /* different commands in different paths */
     char* path[256]; 
     strcpy(path, "/usr/bin/");
-    strcat(path, argTable.arg[arg_num-1]);
-    
+    strcat(path, cmd[0]);
+    //strcat(path, argTable.arg[arg_num-1]);
+
     char* path2[256];
     strcpy(path2, "/bin/");
-    strcat(path2, argTable.arg[arg_num-1]);
+    strcat(path2, cmd[0]);
+    //strcat(path2, argTable.arg[arg_num-1]);
 
     /* creating and filling in array of arguments */
     char** exe = malloc(arg_num+2);
@@ -85,7 +165,7 @@ int exec_cmd(char** cmd, int arg_num)
     int exe_index = arg_num-1;
     for(int i = 0; i < arg_num; i++)
     {
-        exe[exe_index--] = argTable.arg[i];
+        exe[i] = cmd[i];
     }
 
     /* select the correct path by determining if file exists in that directory */
@@ -101,7 +181,7 @@ int exec_cmd(char** cmd, int arg_num)
     
     
     //for(int i = 0; i < arg_num+1; i++)
-        //printf("\nexe[%d]: %s\n", i, exe[i]);
+       //printf("\nexe[%d]: %s\n", i, exe[i]);
 
     /* fork to call execv to execute shell command
         waits to finish to display result before asking for next input */
@@ -114,7 +194,7 @@ int exec_cmd(char** cmd, int arg_num)
     }
     else if(pid == 0){
         if(status = execv(exe[0], exe) < 0){
-            printf("Error exec failed\n");
+            perror("Error exec failed\n");
             exit(1);
         }
     }
@@ -123,7 +203,6 @@ int exec_cmd(char** cmd, int arg_num)
     }
     
     //free(exe);
-    
     return 1;
 }
 
