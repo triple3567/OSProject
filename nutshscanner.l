@@ -5,6 +5,7 @@
 #include <dirent.h> 
 #include <fnmatch.h>
 #include <stdbool.h>
+#include <pwd.h>
 
 //#define unput(c) {yytchar= (c); if(yytchar=='\n') {yylineno--; *yysptr++=yytchar;}
 char* subAliases(char* name){
@@ -196,15 +197,52 @@ META            [/</>/|/"/&]
                         for (int i = 1; i < strlen(yytext); i++){
                             yycopy[i - 1] = yytext[i];
                         }
-                        
-                        char* new_str = malloc(strlen(yycopy) + strlen(home));
-                        strcat(new_str,home);
-                        strcat(new_str,yycopy);
-                        yylval.string = strdup(new_str);
 
+                        char* potentialUsername = malloc(1000);
+                        potentialUsername[0] = '\0';
+                        
+                        int count;
+                        for (count = 0; count < strlen(yycopy); count++){
+                            if( yycopy[count] == '/'){
+                                break;
+                            }
+
+                            potentialUsername[count] = yycopy[count];
+                        }
+                        
+                        struct passwd* user;
+                        user = getpwnam(potentialUsername);
+
+
+                        if(user != NULL){                 
+                            char* userHome = strdup(user->pw_dir);
+                            char* val = malloc(strlen(userHome) + (strlen(yycopy) - count + 1));
+                            val[0] = '\0';
+
+                            int pos = strlen(userHome);
+                            strcat(val, userHome);
+                            for(; count < strlen(yycopy); count++){
+                                val[pos] = yycopy[count];
+                                pos++;
+                            }
+
+                            yylval.string = strdup(val);
+                            printf("Found user home %s\n", yylval.string);
+
+                            free(val);
+                            free(userHome);
+                        }
+                        else{
+                            char* new_str = malloc(strlen(yycopy) + strlen(home));
+                            new_str[0] = '\0';
+                            strcat(new_str,home);
+                            strcat(new_str,yycopy);
+                            yylval.string = strdup(new_str);    
+                            free(new_str);                 
+                        }
                         free(home);
-                        free(yycopy);
-                        free(new_str);
+                        free(yycopy);                     
+                        free(potentialUsername);
                         return STRING;
                     }
 [ ]		            { }
