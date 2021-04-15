@@ -49,81 +49,13 @@ int yyerror(char *s)  {
   return 0;
   }
 
-int get_path(char* cmd, char* path_out)
-{
-    char* path[256]; 
-    strcpy(path, "/usr/bin/");
-    strcat(path, cmd);
-
-    char* path2[256];
-    strcpy(path2, "/bin/");
-    strcat(path2, cmd);
-
-    if(access(path, F_OK) == 0){
-        path_out = path;
-    }
-    else if(access(path2, F_OK) == 0)
-        path_out = path2;
-    else
-        path_out = cmd;
-    return 1;
-}
-
-int build_table(int arg_num)
-{
-    char** reverse = malloc(sizeof(char)*(arg_num+1));
-    int exe_index = arg_num-1;
-    for(int i = 0; i < arg_num; i++)
-    {
-        reverse[exe_index--] = argTable.arg[i];
-        argTable.arg[i] = NULL;
-    }
-    reverse[arg_num] = NULL;
-
-    //for(int i = 0; i < arg_num; i++)
-        //printf("\ni: %d r: %s", i, reverse[i]);
-
-    int partition_arg = 0;
-    char** partition_cmd[256];
-    char* out_file = NULL;
-    char* in_file = NULL;
-    int fd_in;
-    int fd_out;
-    
-    for(int i = 0; i < arg_num; i++)
-    {
-        //printf("\nENTER %d\n", i);
-        if(strcmp(reverse[i], ">") == 0)
-        {
-            int pid;
-            pid = fork();
-
-            if(pid == 0){
-            out_file = reverse[++i];
-
-            if(fd_out = open(out_file, O_WRONLY | O_CREAT, 0644) < 0){
-                perror("Unable to open file");
-                exit(1);
-            }
-            dup2(fd_out, STDOUT_FILENO);
-            dup2(fd_out, STDERR_FILENO);
-            close(fd_out);
-            }
-            continue;
-        }
-        partition_cmd[partition_arg++] = reverse[i];
-    }
-    //partition_cmd[partition_arg] = NULL;
-
-    exec_cmd(partition_cmd, partition_arg);
-    return 1;
-}
-
 int parse_cmd(int arg_num)
 {
-    char** partition_cmd[256];
+    char** partition_cmd = calloc(256, sizeof(char));
     int partition_arg = 0;
 
+    /* argTable catchs commands backward, this reverse to 
+       proper format */
     char** reverse[arg_num];
     int exe_index = arg_num-1;
     for(int i = 0; i < arg_num; i++)
@@ -135,6 +67,8 @@ int parse_cmd(int arg_num)
     char* out_file = NULL;
     bool entered = true;
     
+    /* loop through entire argument.
+        Catches redirection i/o */
     for(int i = 0; i < arg_num; i++)
     {
         if(strcmp(reverse[i], ">") == 0)
@@ -158,7 +92,6 @@ int parse_cmd(int arg_num)
                         exit(1);
                     }
                     dup2(fd, STDOUT_FILENO);
-                    //dup2(fd, STDERR_FILENO);
                     close(fd);
                 }
   
@@ -177,7 +110,7 @@ int parse_cmd(int arg_num)
 
             if(pid == 0)
             {
-                if(out_file != NULL)
+                if(in_file != NULL)
                 {
                     int fd;
                     if(fd = open(in_file, O_RDONLY) < 0)
@@ -185,26 +118,25 @@ int parse_cmd(int arg_num)
                         perror("Unable to open file");
                         exit(1);
                     }
-                    dup2(fd, STDIN_FILENO);
-                    //dup2(fd, STDERR_FILENO);
+                    dup2(fd, STDIN_FILENO);;
                     close(fd);
                 }
+                //partition_cmd[partition_arg] = reverse[i];
+                if(strcmp(i+1, NULL))
+                    partition_cmd[partition_arg] = reverse[i];
                 exec_cmd(partition_cmd, partition_arg);
                 exit(1);
             }
-            
-            //for(int j = 0; j < partition_arg; j++)
-                //partition_cmd[i] = NULL; 
-            //partition_arg = 0;
         }
 
         partition_cmd[partition_arg++] = reverse[i];   
         //printf("\narg num: %d\n", partition_arg);
         //for(int j = 0; j < partition_arg; j++)
-            //printf("\ni: %d arg: %s\n", j, partition_cmd[j]);    
+            //printf("\ni: %d arg: %s\n", j, partition_cmd[j]);
+
+        /* Executes command if no I/O is present */    
         if(i == arg_num-1 && entered)
         {
-            //printf("\nENTERED\n");
             exec_cmd(partition_cmd, partition_arg);
         }
     }
@@ -213,24 +145,16 @@ int parse_cmd(int arg_num)
 
 int exec_cmd(char** cmd, int arg_num)
 {
-    /* different commands in different paths */
+    
     char* path[256]; 
     strcpy(path, "/usr/bin/");
     strcat(path, cmd[0]);
-    //strcat(path, argTable.arg[arg_num-1]);
+
 
     char* path2[256];
     strcpy(path2, "/bin/");
     strcat(path2, cmd[0]);
-    //strcat(path2, argTable.arg[arg_num-1]);
 
-    /* creating and filling in array of arguments */
-    //char** exe = malloc(sizeof(char)*(arg_num+2));
-    /*
-    for(int i = 0; i < arg_num; i++)
-    {
-        exe[i] = cmd[i];
-    }*/
 
     /* select the correct path by determining if file exists in that directory */
     if(access(path, F_OK) == 0){
