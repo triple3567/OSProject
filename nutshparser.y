@@ -21,15 +21,17 @@ int exec_cmd(char** cmd, int arg_num);
 %code {extern int cmd_num = 0;}
 %code {extern char** args;}
 %start cmd_line
-%token <string> BYE CD STRING ALIAS END PRINTENV UNSETENV UNALIAS METACHARACTER
+%token <string> BYE CD STRING ALIAS SETENV END PRINTENV UNSETENV UNALIAS METACHARACTER
 
 
 %%
 cmd_line    :
 	BYE END 		                {exit(1); return 1; }
+    | CD END                        {runCD(varTable.word[1]); return 1;}
 	| CD STRING END        			{runCD($2); return 1;}
 	| ALIAS STRING STRING END		{runSetAlias($2, $3); return 1;}
     | ALIAS END                     {printAlias(); return 1;}
+    | SETENV STRING STRING END      {setEnv($2, $3); return 1;}
     | PRINTENV END                  {printEnv(); return 1;}
     | UNSETENV STRING END           {unsetEnv($2); return 1;}    
     | UNALIAS STRING END            {unalias($2); return 1;} 
@@ -42,7 +44,7 @@ cmds:
     ;
 %%
 
-int yyerror(char *s) {
+int yyerror(char *s)  {
   printf("%s\n",s);
   return 0;
   }
@@ -273,6 +275,22 @@ int runSetAlias(char *name, char *word) {
 	return 1;
 }
 
+int setEnv(char* var, char* word){
+    for (int i = 0; i < varIndex; i++){
+        if (strcmp(varTable.var[i], var) == 0){
+            strcpy(varTable.word[i], word);
+            printf("Eviroment Variable %s Updated \n", var);
+            return 1;
+        }
+    }
+
+    strcpy(varTable.var[varIndex], var);
+    strcpy(varTable.word[varIndex], word);
+    varIndex++;
+    printf("Eviroment Variable %s Added \n", var);
+    return 1;
+}
+
 int printEnv(){
     for (int i = 0; i < varIndex; i++){
         printf("%s = %s\n", varTable.var[i], varTable.word[i]);
@@ -338,3 +356,5 @@ int printAlias(){
     }
     return 1;
 }
+
+
