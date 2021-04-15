@@ -49,6 +49,27 @@ int yyerror(char *s)  {
   return 0;
   }
 
+int getPath(char* cmd, char** path_out)
+{
+    char* path = malloc(sizeof(char)*256); 
+    strcpy(path, "/usr/bin/");
+    strcat(path, cmd);
+
+
+    char* path2 = malloc(sizeof(char)*256);
+    strcpy(path2, "/bin/");
+    strcat(path2, cmd);
+
+
+    /* select the correct path by determining if file exists in that directory */
+    if(access(path, F_OK) == 0){
+        *path_out = path;
+    }
+    else if(access(path2, F_OK) == 0)
+        *path_out = path2;
+    //printf("\nPATH: %s\n", *path_out);
+}
+
 int parse_cmd(int arg_num)
 {
     char** partition_cmd = calloc(256, sizeof(char));
@@ -134,17 +155,12 @@ int parse_cmd(int arg_num)
             char** pipe_right = calloc(256, sizeof(char));
         
             int pipe_num = 0;
-            while(i < arg_num)
+            i++;
+            while(i < arg_num && strcmp(reverse[i],"|") != 0 && strcmp(reverse[i],">") && strcmp(reverse[i],"|"))
             {
-                pipe_right[pipe_num++] = reverse[++i]; 
+                pipe_right[pipe_num++] = reverse[i++]; 
             }
-            //pipe_right[pipe_num] = NULL;
-            //partition_cmd[partition_arg] = NULL;
-            for(int j = 0; j < pipe_num; j++)
-                    printf("\n <<<<< pi: %d arg: %s\n", j, pipe_right[j]); 
-            printf("\nPartion arg: %d\n", partition_arg);
-            for(int j = 0; j < partition_arg; j++)
-                printf("\ni: %d arg: %s\n", j, partition_cmd[j]);
+
             int in = 0;
             int out = 1;
             pid_t pid1;
@@ -156,27 +172,39 @@ int parse_cmd(int arg_num)
 
             if(pid1 == 0)
             {
+                char* path_out = NULL;
+                getPath(pipe_right[0], &path_out);
+                pipe_right[0] = path_out;
+                
                 close(fd[out]);
                 dup2(fd[in], STDIN_FILENO);
                 close(fd[in]);
-                exec_cmd(pipe_right, pipe+1);
+
+                execv(pipe_right[0], pipe_right);
                 perror("Error child exec failed");
                 exit(1);
             }
-            else{
+            pid2 = fork();
+            if(pid2 == 0){
+
+                char* path_out = NULL;
+                getPath(partition_cmd[0], &path_out);
+                partition_cmd[0] = path_out;
+
                 close(fd[in]);
                 dup2(fd[out], STDOUT_FILENO);
                 close(fd[out]);
-                exec_cmd(partition_cmd, partition_arg);
+
+                execv(partition_cmd[0], partition_cmd);
                 perror("Error parent exec failed");
                 exit(1);
             }
             
 
-            //close(fd[1]);
-            //close(fd[0]);
-            //waitpid(pid1);
-            //waitpid(pid2);
+            close(fd[0]);
+            close(fd[1]);
+            waitpid(0);
+            waitpid(0);
             
         }
 
@@ -231,6 +259,8 @@ int exec_cmd(char** cmd, int arg_num)
     }
     else if(pid == 0){
         if(status = execv(cmd[0], cmd) < 0){
+            fprintf(stderr, "path: %s\n", cmd[0]);
+            perror("Error child exec failed");
             perror("Error exec failed\n");
             exit(1);
         }
