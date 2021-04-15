@@ -49,27 +49,74 @@ int yyerror(char *s)  {
   return 0;
   }
 
-int test()
+int get_path(char* cmd, char* path_out)
 {
-    char* out;
-    pid_t pid = fork();
-    if(pid == 0){
-    int fd = open("out_test.txt", O_WRONLY | O_CREAT, 0644);
+    char* path[256]; 
+    strcpy(path, "/usr/bin/");
+    strcat(path, cmd);
 
-    dup2(fd, STDOUT_FILENO);
-    close(fd);
-    printf("Please work");
-    char* args = {"/bin/cat", "testFolder/test.txt", NULL};
-    execv(args[0], args);
+    char* path2[256];
+    strcpy(path2, "/bin/");
+    strcat(path2, cmd);
+
+    if(access(path, F_OK) == 0){
+        path_out = path;
     }
-    //
-    /*
-    char* args = {"/bin/cat", "testFolder/test.txt", NULL};
-    execv(args[0], args);
+    else if(access(path2, F_OK) == 0)
+        path_out = path2;
+    else
+        path_out = cmd;
+    return 1;
+}
+
+int build_table(int arg_num)
+{
+    char** reverse = malloc(sizeof(char)*(arg_num+1));
+    int exe_index = arg_num-1;
+    for(int i = 0; i < arg_num; i++)
+    {
+        reverse[exe_index--] = argTable.arg[i];
+        argTable.arg[i] = NULL;
     }
-    else{
-        waitpid(pid);
-    }*/
+    reverse[arg_num] = NULL;
+
+    //for(int i = 0; i < arg_num; i++)
+        //printf("\ni: %d r: %s", i, reverse[i]);
+
+    int partition_arg = 0;
+    char** partition_cmd[256];
+    char* out_file = NULL;
+    char* in_file = NULL;
+    int fd_in;
+    int fd_out;
+    
+    for(int i = 0; i < arg_num; i++)
+    {
+        //printf("\nENTER %d\n", i);
+        if(strcmp(reverse[i], ">") == 0)
+        {
+            int pid;
+            pid = fork();
+
+            if(pid == 0){
+            out_file = reverse[++i];
+
+            if(fd_out = open(out_file, O_WRONLY | O_CREAT, 0644) < 0){
+                perror("Unable to open file");
+                exit(1);
+            }
+            dup2(fd_out, STDOUT_FILENO);
+            dup2(fd_out, STDERR_FILENO);
+            close(fd_out);
+            }
+            continue;
+        }
+        partition_cmd[partition_arg++] = reverse[i];
+    }
+    //partition_cmd[partition_arg] = NULL;
+
+    exec_cmd(partition_cmd, partition_arg);
+    return 1;
 }
 
 int parse_cmd(int arg_num)
@@ -92,8 +139,12 @@ int parse_cmd(int arg_num)
     {
         if(strcmp(reverse[i], ">") == 0)
         {
-            out_file = reverse[i+1];
+            out_file = reverse[++i];
             entered = false;
+
+            //for(int j = 0; j < partition_arg; j++)
+                    //printf("\n >>>>> pi: %d arg: %s\n", j, partition_cmd[j]);  
+
             int pid = fork();
 
             if(pid == 0)
@@ -101,24 +152,28 @@ int parse_cmd(int arg_num)
                 if(out_file != NULL)
                 {
                     int fd;
-                    if((fd = open(out_file, O_WRONLY | O_CREAT, 0644)) < 0)
+                    if((fd = open(out_file, O_WRONLY | O_CREAT | O_TRUNC, 0644)) < 0)
                     {
                         perror("Unable to open file");
                         exit(1);
                     }
                     dup2(fd, STDOUT_FILENO);
-                    dup2(fd, STDERR_FILENO);
+                    //dup2(fd, STDERR_FILENO);
                     close(fd);
                 }
+  
                 exec_cmd(partition_cmd, partition_arg);
                 exit(1);
             }
         }
         else if(strcmp(reverse[i], "<") == 0)
         {
-            in_file = reverse[i+1];
+            in_file = reverse[++i];
             entered = false;
             int pid = fork();
+
+            //for(int j = 0; j < partition_arg; j++)
+                    //printf("\n <<<<< pi: %d arg: %s\n", j, partition_cmd[j]);  
 
             if(pid == 0)
             {
@@ -131,17 +186,25 @@ int parse_cmd(int arg_num)
                         exit(1);
                     }
                     dup2(fd, STDIN_FILENO);
-                    dup2(fd, STDERR_FILENO);
+                    //dup2(fd, STDERR_FILENO);
                     close(fd);
                 }
                 exec_cmd(partition_cmd, partition_arg);
                 exit(1);
             }
+            
+            //for(int j = 0; j < partition_arg; j++)
+                //partition_cmd[i] = NULL; 
+            //partition_arg = 0;
         }
 
-        partition_cmd[partition_arg++] = reverse[i];       
+        partition_cmd[partition_arg++] = reverse[i];   
+        //printf("\narg num: %d\n", partition_arg);
+        //for(int j = 0; j < partition_arg; j++)
+            //printf("\ni: %d arg: %s\n", j, partition_cmd[j]);    
         if(i == arg_num-1 && entered)
         {
+            //printf("\nENTERED\n");
             exec_cmd(partition_cmd, partition_arg);
         }
     }
@@ -162,28 +225,25 @@ int exec_cmd(char** cmd, int arg_num)
     //strcat(path2, argTable.arg[arg_num-1]);
 
     /* creating and filling in array of arguments */
-    char** exe = malloc(arg_num+2);
-
-    int exe_index = arg_num-1;
+    //char** exe = malloc(sizeof(char)*(arg_num+2));
+    /*
     for(int i = 0; i < arg_num; i++)
     {
         exe[i] = cmd[i];
-    }
+    }*/
 
     /* select the correct path by determining if file exists in that directory */
     if(access(path, F_OK) == 0){
-        exe[0] = path;
+        cmd[0] = path;
     }
     else if(access(path2, F_OK) == 0)
-        exe[0] = path2;
-    else
-        return 0;
-
-    exe[arg_num] = NULL;
+        cmd[0] = path2;
+    
+    cmd[arg_num] = NULL;
     
     
     //for(int i = 0; i < arg_num+1; i++)
-       //printf("\nexe[%d]: %s\n", i, exe[i]);
+       //printf("\nexe[%d]: %s\n", i, cmd[i]);
 
     /* fork to call execv to execute shell command
         waits to finish to display result before asking for next input */
@@ -195,7 +255,7 @@ int exec_cmd(char** cmd, int arg_num)
         exit(1);
     }
     else if(pid == 0){
-        if(status = execv(exe[0], exe) < 0){
+        if(status = execv(cmd[0], cmd) < 0){
             perror("Error exec failed\n");
             exit(1);
         }
@@ -204,7 +264,7 @@ int exec_cmd(char** cmd, int arg_num)
         waitpid(pid, &status, 0);
     }
     
-    //free(exe);
+    //free(cmd);
     return 1;
 }
 
