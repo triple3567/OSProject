@@ -182,13 +182,13 @@ char* subWildCard(char* word){
 
 CHAR            [$\{\}~\:\?\*.A-Za-z0-9!\/_-][$\{\}~\:\?\*.A-Za-z0-9!\/_-]*
 ANYCHAR         [\}\:)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -][\}\:)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -]*
-META            [/</>/|/"/&]
+META            [/</>/|/&]
 
 %x string_condition
 %x env_var_condition
 %%
 
-<string_condition>{ANYCHAR}+     { yylval.string = strdup(yytext); return STRING;}
+<string_condition>{ANYCHAR}+     { yylval.string = strdup(yytext);return STRING;}
 <string_condition>[\"]          {BEGIN(INITIAL);}
 
 [\~]{CHAR}*            { 
