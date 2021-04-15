@@ -56,13 +56,14 @@ int parse_cmd(int arg_num)
 
     /* argTable catchs commands backward, this reverse to 
        proper format */
-    char** reverse[arg_num];
+    char** reverse[arg_num+1];
     int exe_index = arg_num-1;
     for(int i = 0; i < arg_num; i++)
     {
         reverse[exe_index--] = argTable.arg[i];
     }
-
+    reverse[arg_num] = NULL;
+    
     char* in_file = NULL;
     char* out_file = NULL;
     bool entered = true;
@@ -128,6 +129,56 @@ int parse_cmd(int arg_num)
                 exit(1);
             }
         }
+        else if(strcmp(reverse[i], "|") == 0)
+        {
+            char** pipe_right = calloc(256, sizeof(char));
+        
+            int pipe_num = 0;
+            while(i < arg_num)
+            {
+                pipe_right[pipe_num++] = reverse[++i]; 
+            }
+            //pipe_right[pipe_num] = NULL;
+            //partition_cmd[partition_arg] = NULL;
+            for(int j = 0; j < pipe_num; j++)
+                    printf("\n <<<<< pi: %d arg: %s\n", j, pipe_right[j]); 
+            printf("\nPartion arg: %d\n", partition_arg);
+            for(int j = 0; j < partition_arg; j++)
+                printf("\ni: %d arg: %s\n", j, partition_cmd[j]);
+            int in = 0;
+            int out = 1;
+            pid_t pid1;
+            pid_t pid2;
+            int fd[2];
+
+            pipe(fd);
+            pid1 = fork();
+
+            if(pid1 == 0)
+            {
+                close(fd[out]);
+                dup2(fd[in], STDIN_FILENO);
+                close(fd[in]);
+                exec_cmd(pipe_right, pipe+1);
+                perror("Error child exec failed");
+                exit(1);
+            }
+            else{
+                close(fd[in]);
+                dup2(fd[out], STDOUT_FILENO);
+                close(fd[out]);
+                exec_cmd(partition_cmd, partition_arg);
+                perror("Error parent exec failed");
+                exit(1);
+            }
+            
+
+            //close(fd[1]);
+            //close(fd[0]);
+            //waitpid(pid1);
+            //waitpid(pid2);
+            
+        }
 
         partition_cmd[partition_arg++] = reverse[i];   
         //printf("\narg num: %d\n", partition_arg);
@@ -164,10 +215,10 @@ int exec_cmd(char** cmd, int arg_num)
         cmd[0] = path2;
     
     cmd[arg_num] = NULL;
+    printf("\nPATH: %s\n", cmd[0]);
     
-    
-    //for(int i = 0; i < arg_num+1; i++)
-       //printf("\nexe[%d]: %s\n", i, cmd[i]);
+    for(int i = 0; i < arg_num+1; i++)
+       printf("\nexe[%d]: %s\n", i, cmd[i]);
 
     /* fork to call execv to execute shell command
         waits to finish to display result before asking for next input */
