@@ -38,8 +38,15 @@ unserenv
 " " string literals
 enviroment variable substituion
 ~ expansion with extra credit
-
+All Non-built-in Commands
+Redirection I/O for Non-built-in commands
+Piping for Non-built-in commands
+Error handling
 
 
 the functionalities not completed are as follows:
+Running Non-built-in commands in the background
+Redirecting >> I/O
+More than 2 pipe commands
+Pipes and I/O redirection combined
 File Name Completion
