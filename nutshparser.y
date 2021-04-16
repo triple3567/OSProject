@@ -243,10 +243,7 @@ int exec_cmd(char** cmd, int arg_num)
         cmd[0] = path2;
     
     cmd[arg_num] = NULL;
-    printf("\nPATH: %s\n", cmd[0]);
     
-    for(int i = 0; i < arg_num+1; i++)
-       printf("\nexe[%d]: %s\n", i, cmd[i]);
 
     /* fork to call execv to execute shell command
         waits to finish to display result before asking for next input */
@@ -259,7 +256,6 @@ int exec_cmd(char** cmd, int arg_num)
     }
     else if(pid == 0){
         if(status = execv(cmd[0], cmd) < 0){
-            fprintf(stderr, "path: %s\n", cmd[0]);
             perror("Error child exec failed");
             perror("Error exec failed\n");
             exit(1);

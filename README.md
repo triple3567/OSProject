@@ -1,21 +1,4 @@
 # OSProject
-
-## COMPLETED
-bye\
-cd\
-wildcard matching\
-characters '.' and '..'\
-setenv\
-printenv\
-unsetenv variable\
-alias [word] [alias]\
-unalias alias\
-" " string condition\
-enviroment variable substitution ${name}\
-~ expansion with extra credit
-
-## Real README
-
 Welcome to the nutshell by Marcus Elosegui and Eric Ho. This project
 was split up based on the rubric. Eric handled the built-in commands
 enviroment variable expansion, alias expansion, wildcard matching 

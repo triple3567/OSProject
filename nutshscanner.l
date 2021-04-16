@@ -25,11 +25,9 @@ bool ifAlias(char* name){
     return false;
 }
 char* subEnvVar(char* name){
-    printf("Before Env Sub = %s\n", yytext);
 
     for (int i = 0; i < varIndex; i++){
         if (strcmp(varTable.var[i], name) == 0){
-             printf("Enviroment Variable %s = %s\n", name, varTable.word[i]);
             return varTable.word[i];
         }
     }
@@ -121,7 +119,6 @@ char* replaceEnvVar(char* word){
         k++;
     }
 
-    printf("after env var sub: %s\n", newWord);
     return newWord;
 }
 
@@ -156,7 +153,6 @@ char* subWildCard(char* word){
     closedir(d);
     }
 
-    printf("FILES MATCHED = %i\n", files_index);
     char* yy_string;
     yy_string = malloc(allocation + 1000);
     yy_string[0] = '\0';
@@ -166,7 +162,6 @@ char* subWildCard(char* word){
             strcat(yy_string, " ");
         }
     }
-    printf("yy_string = %s\n", yy_string);
 
     
     return yy_string;
@@ -227,7 +222,6 @@ META            [/</>/|/&]
                             }
 
                             yylval.string = strdup(val);
-                            printf("Found user home %s\n", yylval.string);
 
                             free(val);
                             free(userHome);
@@ -257,7 +251,6 @@ unalias             { useAlias = false; return UNALIAS;}
 {META}              { yylval.string = strdup(yytext); return METACHARACTER;}
 [\"]                { BEGIN(string_condition); }
 {CHAR}+              {if(ifAlias(yytext) && useAlias) {
-                        printf("yytext before sub: %s\n", yytext);
                         // source: https://www.cs.princeton.edu/~appel/modern/c/software/flex/flex.html
                            char *yycopy = strdup( subAliases(yytext) );
                            for ( int i = strlen(subAliases(yytext)) - 1; i >= 0; --i )
@@ -278,7 +271,6 @@ unalias             { useAlias = false; return UNALIAS;}
                         free( yycopy );
                     }
                     else {
-                        printf("yytext: %s\n", yytext);
                         yylval.string = strdup(yytext);
                         return STRING;
                     }
